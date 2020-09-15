@@ -1,0 +1,90 @@
+# Welcome to Serverless!
+#
+# This file is the main config file for your service.
+# It's very minimal at this point and uses default values.
+# You can always add more config options for more control.
+# We've included some commented out config examples here.
+# Just uncomment any of them to get that config option.
+#
+# For full config options, check the docs:
+#    docs.serverless.com
+#
+# Happy Coding!
+
+service: customer-api
+# app and org for use with dashboard.serverless.com
+#app: your-app-name
+#org: your-org-name
+
+# You can pin your service to only deploy with a specific Serverless version
+# Check out our docs for more details
+frameworkVersion: '2'
+custom:
+  settings:
+    CUSTOMER_TABLE: Customer
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  region: ap-southeast-1
+  environment: ${self:custom.settings}
+  iamRoleStatements:
+   - Effect: "Allow"
+     Action:
+        - dynamodb:DescribeTable
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+     Resource:
+      - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.settings.CUSTOMER_TABLE}"
+
+functions:
+  createCustomer:
+    handler: handler.createCustomer
+    events:
+    - http:
+        path: /customer
+        method: post
+  deleteCustomer:
+    handler: handler.deleteCustomer
+    events:
+    - http:
+        path: /customer/{id}
+        method: delete
+  getCustomers:
+    handler: handler.getCustomers
+    events:
+    - http:
+        path: /customers/{number}
+        method: get
+  getCustomer:
+    handler: handler.getCustomer
+    events:
+    - http:
+        path: /customer/cust_phone/{phone}
+        method: get
+  updateCustomer:
+    handler: handler.updateCustomer
+    events:
+    - http:
+        path: /customer/{id}
+        method: put
+
+resources:
+  Resources:
+    CustomerTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+        - AttributeName: "id"
+          AttributeType: "S"
+        KeySchema:
+        - AttributeName: "id"
+          KeyType: "HASH"
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:custom.settings.CUSTOMER_TABLE}
+
